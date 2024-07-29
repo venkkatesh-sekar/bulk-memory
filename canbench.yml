@@ -1,0 +1,6 @@
+build_cmd:
+  RUSTFLAGS='-C target-feature=+bulk-memory' cargo build --release -p canister --target wasm32-unknown-unknown --features canbench-rs
+  # cargo build --release -p canister --target wasm32-unknown-unknown --features canbench-rs 
+
+wasm_path:
+  target/wasm32-unknown-unknown/release/canister.wasm
