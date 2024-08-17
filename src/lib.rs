@@ -155,3 +155,49 @@ mod benches {
         linear_extend_1mb();
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use candid::{encode_one, Principal};
+    use pocket_ic::PocketIc;
+
+    #[test]
+    #[should_panic]
+    fn test_memory_copy() {
+        let pic = PocketIc::new();
+        // Create an empty canister as the anonymous principal and add cycles.
+        let canister_id = pic.create_canister();
+        pic.add_cycles(canister_id, 20_000_000_000_000);
+
+        let bytes = include_bytes!("../target/wasm32-unknown-unknown/release/memory_canister.wasm");
+        pic.install_canister(canister_id, bytes.to_vec(), vec![], None);
+
+        pic.update_call(
+            canister_id,
+            Principal::anonymous(),
+            "memory",
+            encode_one(0_u8).unwrap(),
+        )
+        .expect("Failed to call qmemory_canister");
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_memory_fill() {
+        let pic = PocketIc::new();
+        // Create an empty canister as the anonymous principal and add cycles.
+        let canister_id = pic.create_canister();
+        pic.add_cycles(canister_id, 20_000_000_000_000);
+
+        let bytes = include_bytes!("../target/wasm32-unknown-unknown/release/memory_canister.wasm");
+        pic.install_canister(canister_id, bytes.to_vec(), vec![], None);
+
+        pic.update_call(
+            canister_id,
+            Principal::anonymous(),
+            "memory",
+            encode_one(1_u8).unwrap(),
+        )
+        .expect("Failed to call memory_canister");
+    }
+}
