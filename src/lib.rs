@@ -5,66 +5,129 @@ const KB: usize = 1024;
 const OS_PAGE_SIZE: usize = 4 * KB;
 const WASM_PAGE_SIZE: usize = 16 * OS_PAGE_SIZE;
 
+// for memory call
+const MAX_DATA_LENGTH: usize = 2 * 1024 * 1024 * 1024 - 150 * PAGE_PAYLOAD.len();
+const B: u64 = 1_000_000_000;
+const SAFE_HAVEN: u64 = 10_000;
+
 thread_local! {
-    static HOLDER: RefCell<Vec<u8>> = RefCell::new(vec![]);
+    static HOLDER: RefCell<Vec<u8>> = const { RefCell::new(vec![]) };
 }
 
 #[ic_cdk::update]
 pub fn linear_extend_1kb() {
-    HOLDER.with(|expand| {
-        loop {
-            match expand.borrow_mut().try_reserve_exact(KB) {
-                Ok(_) => (),
-                Err(_) => return
-            }
-            expand.borrow_mut().extend_from_slice(PAGE_PAYLOAD[..KB].as_bytes());
+    HOLDER.with(|expand| loop {
+        match expand.borrow_mut().try_reserve_exact(KB) {
+            Ok(_) => (),
+            Err(_) => return,
         }
+        expand
+            .borrow_mut()
+            .extend_from_slice(PAGE_PAYLOAD[..KB].as_bytes());
     });
 }
 
 #[ic_cdk::update]
 pub fn linear_extend_4kb() {
-    HOLDER.with(|expand| {
-        loop {
-            match expand.borrow_mut().try_reserve_exact(OS_PAGE_SIZE) {
-                Ok(_) => (),
-                Err(_) => return
-            }
-            expand.borrow_mut().extend_from_slice(PAGE_PAYLOAD.as_bytes());
+    HOLDER.with(|expand| loop {
+        match expand.borrow_mut().try_reserve_exact(OS_PAGE_SIZE) {
+            Ok(_) => (),
+            Err(_) => return,
         }
+        expand
+            .borrow_mut()
+            .extend_from_slice(PAGE_PAYLOAD.as_bytes());
     });
 }
 
 #[ic_cdk::update]
 pub fn linear_extend_64kb() {
     let copy = PAGE_PAYLOAD.repeat(16);
-    let payload = copy.as_str().as_bytes();
+    let payload = copy.as_bytes();
 
-    HOLDER.with(|expand| {
-        loop {
-            match expand.borrow_mut().try_reserve_exact(WASM_PAGE_SIZE) {
-                Ok(_) => (),
-                Err(_) => return
-            }
-            expand.borrow_mut().extend_from_slice(payload);
+    HOLDER.with(|expand| loop {
+        match expand.borrow_mut().try_reserve_exact(WASM_PAGE_SIZE) {
+            Ok(_) => (),
+            Err(_) => return,
         }
+        expand.borrow_mut().extend_from_slice(payload);
     });
 }
 
 #[ic_cdk::update]
 pub fn linear_extend_1mb() {
     let copy = PAGE_PAYLOAD.repeat(256);
-    let payload = copy.as_str().as_bytes();
-    
-    HOLDER.with(|expand| {
-        loop {
-            match expand.borrow_mut().try_reserve_exact(WASM_PAGE_SIZE * 16) {
-                Ok(_) => (),
-                Err(_) => return
-            }
-            expand.borrow_mut().extend_from_slice(payload);
+    let payload = copy.as_bytes();
+
+    HOLDER.with(|expand| loop {
+        match expand.borrow_mut().try_reserve_exact(WASM_PAGE_SIZE * 16) {
+            Ok(_) => (),
+            Err(_) => return,
         }
+        expand.borrow_mut().extend_from_slice(payload);
     });
+}
+
+#[ic_cdk::update]
+fn memory(n: u8) {
+    // Build the canister with export RUSTFLAGS="-Ctarget-feature=+bulk-memory"
+
+    // prepare payload
+    let mut src_buf = PAGE_PAYLOAD
+        .repeat(MAX_DATA_LENGTH / PAGE_PAYLOAD.len())
+        .into_bytes();
+    let mut dst_buf: Vec<u8> = Vec::with_capacity(src_buf.len());
+
+    // Check if we have enough stable memory for padding
+    let size = unsafe { ic0::stable64_size() };
+    if size < 65535 {
+        let new_size: i64 = 65535 - size;
+        let _grow = unsafe { ic0::stable64_grow(new_size) };
+    }
+
+    let now = ic_cdk::api::performance_counter(0);
+    ic_cdk::println!("Instruction used before padding {}", now);
+
+    // large stable write to pad slice limit to the end
+    unsafe {
+        ic0::stable64_write(0_i64, src_buf.as_ptr() as i64, calculate_offset(now) as i64);
+    }
+
+    let now = ic_cdk::api::performance_counter(0);
+    ic_cdk::println!(
+        "Instruction used after padding {}, src_buf length {}",
+        now,
+        src_buf.len()
+    );
+
+    match n {
+        0 => {
+            // memory.copy
+            unsafe {
+                std::ptr::copy_nonoverlapping(
+                    src_buf.as_ptr(),
+                    dst_buf.as_mut_ptr(),
+                    src_buf.len(),
+                );
+                dst_buf.set_len(src_buf.len());
+            }
+        }
+        1 => {
+            // memory.fill
+            src_buf.as_mut_slice().fill(0xab);
+        }
+        _ => unimplemented!(),
+    }
+}
+
+fn calculate_offset(inst: u64) -> u64 {
+    let remaining_slice = (2 * B) - (inst % (2 * B));
+
+    // remaining = 20 + bytes + (ceil(bytes / 4096) * 1000);
+    // we ignore the ceil for rough calculation
+
+    let bytes = (4096 * (remaining_slice - 20)) / 5096;
+    bytes - SAFE_HAVEN
 }
 
 #[cfg(feature = "canbench-rs")]
@@ -91,5 +154,4 @@ mod benches {
     fn benchmark_linear_extend_1mb() {
         linear_extend_1mb();
     }
-
 }

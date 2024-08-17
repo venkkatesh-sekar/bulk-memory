@@ -1,5 +1,5 @@
 [package]
-name = "canister"
+name = "memory_canister"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,7 +8,11 @@ crate-type = ["cdylib"]
 
 [dependencies]
 candid = "0.10.0"
-ic-cdk = "0.12.0"
+ic-cdk = "0.15.1"
 ic-cdk-macros = "0.6.8"
 canbench-rs = {version = "0.1.4", optional = true}
+ic0 = "0.23.0"
 
+[profile.release]
+lto = true
+opt-level = 3

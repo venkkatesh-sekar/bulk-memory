@@ -1,3 +1,23 @@
+## Testing slice limits
+```sh
+dfx start --background 
+export RUSTFLAGS="-Ctarget-feature=+bulk-memory"
+dfx deploy
+
+
+# To test memory copy
+dfx canister call memory_canister memory '(0: nat8)'
+
+Error: Failed update call.
+Caused by: The replica returned a rejection error: reject code CanisterError, reject message Error from Canister hiser-juaaa-aaaaa-qaawa-cai: Canister attempted to perform a large memory operation that used 3999981591 instructions and exceeded the slice limit 2000000000., error code None
+
+# To test memory fill
+dfx canister call memory_canister memory '(1: nat8)'
+Error: Failed update call.
+Caused by: The replica returned a rejection error: reject code CanisterError, reject message Error from Canister hiser-juaaa-aaaaa-qaawa-cai: Canister attempted to perform a large memory operation that used 3999981589 instructions and exceeded the slice limit 2000000000., error code None
+```
+
+## Benchmarking bulk-memory
 1. Install `canbench`
 ```sh
 cargo binstall canbench
@@ -7,11 +27,11 @@ cargo binstall canbench
 $ cat canbench.yml
 
 build_cmd:
-  # RUSTFLAGS='-C target-feature=+bulk-memory' cargo build --release -p canister --target wasm32-unknown-unknown --features canbench-rs
-  cargo build --release -p canister --target wasm32-unknown-unknown --features canbench-rs 
+  # RUSTFLAGS='-C target-feature=+bulk-memory -Copt-level=3' cargo build --release -p memory_canister --target wasm32-unknown-unknown --features canbench-rs
+  RUSTFLAGS='-Copt-level=3' cargo build --release -p memory_canister --target wasm32-unknown-unknown --features canbench-rs 
 
 wasm_path:
-  target/wasm32-unknown-unknown/release/canister.wasm
+  target/wasm32-unknown-unknown/release/memory_canister.wasm
 
 $ canbench
 
@@ -54,11 +74,11 @@ Benchmark: benchmark_linear_extend_1mb (new)
 $ cat canbench.yml
 
 build_cmd:
-  RUSTFLAGS='-C target-feature=+bulk-memory' cargo build --release -p canister --target wasm32-unknown-unknown --features canbench-rs
-  # cargo build --release -p canister --target wasm32-unknown-unknown --features canbench-rs 
+  RUSTFLAGS='-C target-feature=+bulk-memory -Copt-level=3' cargo build --release -p memory_canister --target wasm32-unknown-unknown --features canbench-rs
+  # RUSTFLAGS='-Copt-level=3' cargo build --release -p memory_canister --target wasm32-unknown-unknown --features canbench-rs 
 
 wasm_path:
-  target/wasm32-unknown-unknown/release/canister.wasm
+  target/wasm32-unknown-unknown/release/memory_canister.wasm
 
 $ canbench
 
