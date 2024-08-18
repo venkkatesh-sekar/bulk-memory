@@ -17,6 +17,12 @@ Error: Failed update call.
 Caused by: The replica returned a rejection error: reject code CanisterError, reject message Error from Canister hiser-juaaa-aaaaa-qaawa-cai: Canister attempted to perform a large memory operation that used 3999981589 instructions and exceeded the slice limit 2000000000., error code None
 ```
 
+## Testing locally
+You can also run the tests with pocket-ic
+```sh
+RUSTFLAGS="" cargo test
+```
+
 ## Benchmarking bulk-memory
 1. Install `canbench`
 ```sh
@@ -27,8 +33,8 @@ cargo binstall canbench
 $ cat canbench.yml
 
 build_cmd:
-  # RUSTFLAGS='-C target-feature=+bulk-memory -Copt-level=3' cargo build --release -p memory_canister --target wasm32-unknown-unknown --features canbench-rs
-  RUSTFLAGS='-Copt-level=3' cargo build --release -p memory_canister --target wasm32-unknown-unknown --features canbench-rs 
+  # RUSTFLAGS='-C target-feature=+bulk-memory -Copt-level=3 -Clto' cargo build --release -p memory_canister --target wasm32-unknown-unknown --features canbench-rs
+  RUSTFLAGS='-Copt-level=3 -Clto' cargo build --release -p memory_canister --target wasm32-unknown-unknown --features canbench-rs 
 
 wasm_path:
   target/wasm32-unknown-unknown/release/memory_canister.wasm
@@ -74,8 +80,8 @@ Benchmark: benchmark_linear_extend_1mb (new)
 $ cat canbench.yml
 
 build_cmd:
-  RUSTFLAGS='-C target-feature=+bulk-memory -Copt-level=3' cargo build --release -p memory_canister --target wasm32-unknown-unknown --features canbench-rs
-  # RUSTFLAGS='-Copt-level=3' cargo build --release -p memory_canister --target wasm32-unknown-unknown --features canbench-rs 
+  RUSTFLAGS='-C target-feature=+bulk-memory -Copt-level=3 -Clto' cargo build --release -p memory_canister --target wasm32-unknown-unknown --features canbench-rs
+  # RUSTFLAGS='-Copt-level=3 -Clto' cargo build --release -p memory_canister --target wasm32-unknown-unknown --features canbench-rs 
 
 wasm_path:
   target/wasm32-unknown-unknown/release/memory_canister.wasm
@@ -86,7 +92,7 @@ $ canbench
 
 Benchmark: benchmark_linear_extend_1kb (new)
   total:
-    instructions: 18.75 B (new)
+    instructions: 6.55 B (new)
     heap_increase: 50.30 K pages (new)
     stable_memory_increase: 0 pages (new)
 
@@ -94,7 +100,7 @@ Benchmark: benchmark_linear_extend_1kb (new)
 
 Benchmark: benchmark_linear_extend_4kb (new)
   total:
-    instructions: 18.28 B (new)
+    instructions: 5.96 B (new)
     heap_increase: 50.30 K pages (new)
     stable_memory_increase: 0 pages (new)
 
@@ -102,7 +108,7 @@ Benchmark: benchmark_linear_extend_4kb (new)
 
 Benchmark: benchmark_linear_extend_64kb (new)
   total:
-    instructions: 18.49 B (new)
+    instructions: 6.25 B (new)
     heap_increase: 41.55 K pages (new)
     stable_memory_increase: 0 pages (new)
 
@@ -110,7 +116,7 @@ Benchmark: benchmark_linear_extend_64kb (new)
 
 Benchmark: benchmark_linear_extend_1mb (new)
   total:
-    instructions: 19.67 B (new)
+    instructions: 6.53 B (new)
     heap_increase: 44.72 K pages (new)
     stable_memory_increase: 0 pages (new)
 

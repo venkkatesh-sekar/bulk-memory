@@ -178,7 +178,7 @@ mod tests {
             "memory",
             encode_one(0_u8).unwrap(),
         )
-        .expect("Failed to call qmemory_canister");
+        .expect("Failed to call memory_canister");
     }
 
     #[test]

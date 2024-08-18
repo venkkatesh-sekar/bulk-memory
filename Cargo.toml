@@ -8,14 +8,14 @@ crate-type = ["cdylib"]
 
 [dependencies]
 candid = "0.10.0"
-ic-cdk = "0.15.1"
+ic-cdk = "0.13.4"
 ic-cdk-macros = "0.6.8"
 canbench-rs = {version = "0.1.4", optional = true}
 ic0 = "0.23.0"
 
 # pocket-ic seems to be broken with the latest management-canister types
 [dev-dependencies]
-pocket-ic = {path = "/home/vsekar/ic/packages/pocket-ic"}
+pocket-ic = {git = "https://github.com/dfinity/ic", rev = "4e1c0e8c24d47df3f3040a1e25ffec8c530eedbf"}
 
 [profile.release]
 lto = true

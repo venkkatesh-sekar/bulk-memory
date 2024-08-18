@@ -713,19 +713,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ic-cdk"
-version = "0.15.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "038ff230bf0fc8630943e3c52e989d248a7c89834ccb65da408fabc5817a475b"
-dependencies = [
- "candid 0.10.10",
- "ic-cdk-macros 0.15.0",
- "ic0 0.23.0",
- "serde",
- "serde_bytes",
-]
-
-[[package]]
 name = "ic-cdk-macros"
 version = "0.6.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -758,20 +745,6 @@ name = "ic-cdk-macros"
 version = "0.13.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7b2a7d0338dbd29d63df3445402dc9cd792d2f65ceccf36d4f9a88529ca2b62d"
-dependencies = [
- "candid 0.10.10",
- "proc-macro2",
- "quote",
- "serde",
- "serde_tokenstream 0.2.2",
- "syn 2.0.74",
-]
-
-[[package]]
-name = "ic-cdk-macros"
-version = "0.15.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3af44fb4ec3a4b18831c9d3303ca8fa2ace846c4022d50cb8df4122635d3782e"
 dependencies = [
  "candid 0.10.10",
  "proc-macro2",
@@ -986,7 +959,7 @@ version = "0.1.0"
 dependencies = [
  "canbench-rs",
  "candid 0.10.10",
- "ic-cdk 0.15.1",
+ "ic-cdk 0.13.4",
  "ic-cdk-macros 0.6.10",
  "ic0 0.23.0",
  "pocket-ic",
@@ -1217,6 +1190,7 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 [[package]]
 name = "pocket-ic"
 version = "4.0.0"
+source = "git+https://github.com/dfinity/ic?rev=4e1c0e8c24d47df3f3040a1e25ffec8c530eedbf#4e1c0e8c24d47df3f3040a1e25ffec8c530eedbf"
 dependencies = [
  "base64 0.13.1",
  "candid 0.10.10",
