@@ -116,6 +116,9 @@ fn memory(n: u8) {
             // memory.fill
             src_buf.as_mut_slice().fill(0xab);
         }
+        2 => {
+            return;
+        }
         _ => unimplemented!(),
     }
 }
@@ -199,5 +202,83 @@ mod tests {
             encode_one(1_u8).unwrap(),
         )
         .expect("Failed to call memory_canister");
+    }
+
+    #[test]
+    fn test_cycles_consumed() {
+        let pic = PocketIc::new();
+        let bytes = include_bytes!("../target/wasm32-unknown-unknown/release/memory_canister.wasm");
+
+        // memory_copy
+        let canister_id = pic.create_canister();
+        pic.add_cycles(canister_id, 20_000_000_000_000);
+        pic.install_canister(canister_id, bytes.to_vec(), vec![], None);
+
+        let execution_0_cycles_balance_before = pic.cycle_balance(canister_id);
+        let err = pic
+            .update_call(
+                canister_id,
+                Principal::anonymous(),
+                "memory",
+                encode_one(0_u8).unwrap(),
+            )
+            .unwrap_err();
+        let execution_0_cycles_balance_delta =
+            execution_0_cycles_balance_before - pic.cycle_balance(canister_id);
+        let nums: Vec<i64> = err
+            .description
+            .split_whitespace()
+            .filter_map(|s| s.parse::<i64>().ok())
+            .collect();
+        let execution_0_instructions_extra = nums.first().unwrap();
+
+        // memory_fill
+        let canister_id = pic.create_canister();
+        pic.add_cycles(canister_id, 20_000_000_000_000);
+        pic.install_canister(canister_id, bytes.to_vec(), vec![], None);
+        let execution_1_cycles_balance_before = pic.cycle_balance(canister_id);
+        let err = pic
+            .update_call(
+                canister_id,
+                Principal::anonymous(),
+                "memory",
+                encode_one(1_u8).unwrap(),
+            )
+            .unwrap_err();
+        let execution_1_cycles_balance_delta =
+            execution_1_cycles_balance_before - pic.cycle_balance(canister_id);
+        let nums: Vec<i64> = err
+            .description
+            .split_whitespace()
+            .filter_map(|s| s.parse::<i64>().ok())
+            .collect();
+        let execution_1_instructions_extra = nums.first().unwrap();
+
+        // no large operation
+        let canister_id = pic.create_canister();
+        pic.add_cycles(canister_id, 20_000_000_000_000);
+        pic.install_canister(canister_id, bytes.to_vec(), vec![], None);
+        let execution_2_cycles_balance_before = pic.cycle_balance(canister_id);
+        let _ = pic.update_call(
+            canister_id,
+            Principal::anonymous(),
+            "memory",
+            encode_one(2_u8).unwrap(),
+        );
+        let execution_2_cycles_balance_delta =
+            execution_2_cycles_balance_before - pic.cycle_balance(canister_id);
+
+        println!(
+            "Memory copy: Overflow Instruction {}, Cycles {}, Expected {}",
+            execution_0_instructions_extra,
+            execution_0_cycles_balance_delta - execution_2_cycles_balance_delta,
+            (execution_0_instructions_extra / 10) * 4
+        );
+        println!(
+            "Memory fill: Overflow Instruction {}, Cycles {}, Expected {}",
+            execution_1_instructions_extra,
+            execution_1_cycles_balance_delta - execution_2_cycles_balance_delta,
+            (execution_0_instructions_extra / 10) * 4
+        );
     }
 }
